@@ -1,0 +1,7 @@
+Resources:
+  SampleQueueSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt SampleQueue.Arn
+      TopicArn: !Ref SampleTopic

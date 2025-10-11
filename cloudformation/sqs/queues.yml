@@ -1,0 +1,22 @@
+Resources:
+  SampleQueue:
+    Type: AWS::SQS::Queue
+    Properties: 
+      MessageRetentionPeriod: 1209600
+      QueueName: ${self:service}-${opt:stage}-sample-queue
+      RedrivePolicy: 
+        deadLetterTargetArn: 
+          Fn::GetAtt:
+            - "SampleDLQ"
+            - "Arn"
+        maxReceiveCount: 10
+      VisibilityTimeout: 30
+  SampleDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ${self:service}-${opt:stage}-sample-dlq
+      MessageRetentionPeriod: 1209600
+
+Outputs:
+  SampleSQSArn:
+    Value: !GetAtt SampleQueue.Arn
