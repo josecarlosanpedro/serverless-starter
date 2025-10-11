@@ -1,0 +1,88 @@
+service: cloudformation-ddb
+
+custom:
+  purpose: ddb
+  ddbname: ${self:service}-${opt:stage}-table
+  devicesddbname: cic-smartapp-devices-ddb-${opt:stage}-table
+  ingestsddbname: cic-smartapp-ingest-ddb-${opt:stage}-table
+  roomddbname: cic-smartapp-room-ddb-${opt:stage}-table
+  scheduledeviceddbname: cic-smartapp-schedule-device-ddb-${opt:stage}-table
+  schedulerddbname: cic-smartapp-scheduler-ddb-${opt:stage}-table
+  routinedeviceddbname: cic-smartapp-routine-device-ddb-${opt:stage}-table
+  routineddbname: cic-smartapp-routine-ddb-${opt:stage}-table
+  bookingddbname: cic-smartapp-booking-ddb-${opt:stage}-table
+  bookingnotificationddbname: cic-smartapp-booking-notification-ddb-${opt:stage}-table
+  homeddbname: cic-smartapp-home-ddb-${opt:stage}-table
+  notificationlogsddbname: cic-smartapp-notification-logs-ddb-${opt:stage}-table
+  lookuptipslogsddbname: cic-smartapp-lookup-tips-ddb-${opt:stage}-table
+  lookupelectricproviderddbname: cic-smartapp-lookup-electric-provider-ddb-${opt:stage}-table
+  lookupprovincesddbname: cic-smartapp-lookup-provinces-ddb-${opt:stage}-table
+  lookupmunicipalitiesddbname: cic-smartapp-lookup-municipalities-ddb-${opt:stage}-table
+  lookupdevicetypeddbname: cic-smartapp-lookup-device-type-ddb-${opt:stage}-table
+  paymentsourceddbname: cic-smartapp-payment-source-ddb-${opt:stage}-table
+  sdklogsddbname: cic-smartapp-sdk-logs-ddb-${opt:stage}-table
+  thirdpartytokensddbname: cic-smartapp-third-party-token-ddb-${opt:stage}-table
+  kilowatthourddbname: cic-smartapp-kilowatt-hour-ddb-${opt:stage}-table
+  latestingestdataddbname: cic-smartapp-latest-ingest-data-ddb-${opt:stage}-table
+  tekobrangayddbname: cic-smartapp-teko-barangay-ddb-${opt:stage}-table
+  tekoappliancetypesddbname: teko-appliance-types-ddb-${opt:stage}-table
+  tekoappliancesddbname: teko-appliances-ddb-${opt:stage}-table
+  tekobrandsddbname: teko-brands-ddb-${opt:stage}-table
+  tekocitiesddbname: teko-cities-ddb-${opt:stage}-table
+  tekoprovincesddbname: teko-provinces-ddb-${opt:stage}-table
+  tekoregionsddbname: teko-regions-ddb-${opt:stage}-table
+  tekoservicetypesddbname: teko-service-types-ddb-${opt:stage}-table
+  tekounittypesddbname: teko-unit-types-ddb-${opt:stage}-table
+  tekofeedbackchoicesddbname: teko-feedback-choices-ddb-${opt:stage}-table
+  tekofeedbackquestionsddbname: teko-feedback-questions-ddb-${opt:stage}-table
+  tekoapplianceinfoddbname: teko-appliance-info-ddb-${opt:stage}-table
+  tekoserviceratingddbname: teko-service-rating-ddb-${opt:stage}-table
+  cicmobileversionddbname: cic-mobile-version-ddb-${opt:stage}-table
+  tekoescalationserviceddbname: teko-escalationservice-ddb-${opt:stage}-table
+  dpsentriesddbname: dps-entries-ddb-${opt:stage}-table
+
+provider:
+  name: aws
+  region: ap-southeast-1
+  stackName: ${self:service}
+
+resources:
+  Description:
+    'Starter - Dynamo DB'
+  Resources:
+
+    DynamoDb:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+        - AttributeName: phone_number
+          AttributeType: S
+        GlobalSecondaryIndexes:
+        - IndexName: "email"
+          KeySchema:
+            - AttributeName: "email"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+        - IndexName: "phone_number"
+          KeySchema:
+            - AttributeName: "phone_number"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "ALL"
+        KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        Tags:
+          - Key: User
+            Value: CIC
+        TableName: ${self:custom.ddbname}
