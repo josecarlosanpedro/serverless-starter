@@ -1,0 +1,16 @@
+Resources:
+  SampleQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties: 
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal: "*"
+          Action: SQS:SendMessage
+          Resource:
+            Fn::GetAtt:
+              - SampleQueue
+              - Arn
+      Queues:
+        - Ref: SampleQueue
