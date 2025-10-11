@@ -1,0 +1,15 @@
+service: serverless-api
+provider:
+  name: aws
+  logs:
+    restApi: true
+  runtime: nodejs20.x
+  stackName: ${self:service}
+  versionFunctions: false
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http:
+          path: hello
