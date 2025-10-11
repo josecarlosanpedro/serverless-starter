@@ -1,0 +1,195 @@
+service: cloudformation-cognito
+
+provider:
+  name: aws
+  region: ap-southeast-1
+  stackName: ${self:service}
+  stage: ${opt:stage}
+
+
+resources:
+  Description:
+    'Starter - Cognito'
+  Resources:
+    SnsSmsConfigRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: cognito-sns-caller-role-${opt:stage}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: cognito-idp.amazonaws.com
+              Action: sts:AssumeRole
+              Condition:
+                StringEquals:
+                  'sts:ExternalId': cognito-${opt:stage}
+        Path: "/"
+        Policies:
+          - PolicyName: ${self:provider.stackName}-sns-cognito-policy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: '*'
+
+    CognitoUserPool:
+      DependsOn: SnsSmsConfigRole
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:provider.stackName}-userpool
+        AutoVerifiedAttributes:
+          - phone_number
+        UsernameAttributes:
+          - phone_number
+        SmsConfiguration:
+          ExternalId: cognito-${opt:stage}
+          SnsCallerArn:
+            !Join
+            - ':'
+            - - 'arn:aws:iam:'
+              - Ref: "AWS::AccountId"
+              - role/cognito-sns-caller-role-${opt:stage}
+       
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+            RequireUppercase: true
+        Schema:
+          - AttributeDataType: String
+            Mutable: false
+            Name: phone_number
+            StringAttributeConstraints:
+              MaxLength: "256"
+              MinLength: "0"
+          - AttributeDataType: String
+            Mutable: false
+            Name: user_id
+            StringAttributeConstraints:
+              MaxLength: "256"
+              MinLength: "0"
+          - AttributeDataType: String
+            Mutable: true
+            Name: first_name
+            StringAttributeConstraints:
+              MaxLength: "256"
+              MinLength: "0"
+          - AttributeDataType: String
+            Mutable: true
+            Name: last_name
+            StringAttributeConstraints:
+              MaxLength: "256"
+              MinLength: "0"
+          - AttributeDataType: String
+            Mutable: true
+            Name: profile_source
+            StringAttributeConstraints:
+              MaxLength: "256"
+              MinLength: "0"
+          - AttributeDataType: String
+            Mutable: true
+            Name: fb_id
+            StringAttributeConstraints:
+              MaxLength: "256"
+              MinLength: "0"
+          - AttributeDataType: String
+            Mutable: true
+            Name: fb_access_token
+            StringAttributeConstraints:
+              MaxLength: "256"
+              MinLength: "0"
+          - AttributeDataType: String
+            Mutable: true
+            Name: fb_expires_in
+            StringAttributeConstraints:
+              MaxLength: "256"
+              MinLength: "0"
+          - AttributeDataType: String
+            Mutable: true
+            Name: electric_provider
+            StringAttributeConstraints:
+              MaxLength: "256"
+              MinLength: "0"
+
+    FacebookUserPoolIdentityProvider:
+      Type: AWS::Cognito::UserPoolIdentityProvider
+      Properties:
+        UserPoolId: !Ref CognitoUserPool
+        ProviderName: "Facebook"
+        ProviderDetails:
+          client_id: "xxxxx"
+          client_secret: "xxxxxxx"
+          authorize_scopes: "public_profile,email"
+        ProviderType: "Facebook"
+        AttributeMapping:
+          id: Username
+          email: Email
+          first_name: custom:first_name
+          user_id: custom:user_id
+          last_name: custom:last_name
+          profile_source: custom:profile_source
+          access_token: custom:fb_access_token
+
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      DependsOn: 
+        - FacebookUserPoolIdentityProvider
+      Properties:
+        ClientName: ${self:provider.stackName}-user-pool-client
+        UserPoolId: !Ref CognitoUserPool
+        SupportedIdentityProviders:
+          - COGNITO
+          - Facebook
+        GenerateSecret: false
+        RefreshTokenValidity: 30
+        AccessTokenValidity: 24
+        IdTokenValidity: 24
+        AllowedOAuthFlowsUserPoolClient: true
+        AllowedOAuthFlows: 
+          - code
+        AllowedOAuthScopes:
+          - email
+          - phone
+          - openid
+          - profile
+          - aws.cognito.signin.user.admin
+        CallbackURLs: 
+          - https://test.com/callback
+        DefaultRedirectURI: https://test.com/callback
+        LogoutURLs: 
+          - https://test.com/callback
+        ExplicitAuthFlows:
+          - ALLOW_ADMIN_USER_PASSWORD_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+          - ALLOW_CUSTOM_AUTH
+          - ALLOW_USER_SRP_AUTH
+        ReadAttributes:
+          - custom:first_name
+          - custom:user_id
+          - custom:last_name
+          - custom:profile_source
+          - custom:fb_id
+          - custom:fb_access_token
+          - custom:fb_expires_in
+          - custom:electric_provider
+
+  Outputs:
+    CognitoUserPoolArn:
+      Value:
+        "Fn::GetAtt": [ CognitoUserPool, Arn ]
+      Export:
+        Name: ${self:provider.stackName}::UserPoolArn
+    CognitoUserPoolId:
+      Value: !Ref CognitoUserPool
+      Export:
+        Name: ${self:provider.stackName}::UserPoolId
+    CognitoUserPoolClientId:
+      Value: !Ref CognitoUserPoolClient
+      Export:
+        Name: ${self:provider.stackName}::UserPoolClientId
