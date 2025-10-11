@@ -1,0 +1,34 @@
+service: cloudformation-s3
+
+provider:
+  name: aws
+  region: ap-southeast-1
+  stackName: ${self:service}-
+  stage: ${opt:stage}
+
+resources:
+  Description:
+    'New Serverless Backend - S3'
+  Resources:
+    appbucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: bucket-${opt:stage}
+        BucketEncryption:
+          ServerSideEncryptionConfiguration:
+            - BucketKeyEnabled: true
+              ServerSideEncryptionByDefault:
+                SSEAlgorithm: 'AES256'
+        VersioningConfiguration:
+          Status: Enabled
+        CorsConfiguration:
+          CorsRules:
+            - AllowedMethods:
+              - DELETE
+              - POST
+              - PUT
+              - GET
+              AllowedOrigins:
+              - '*'
+              AllowedHeaders:
+              - '*'
