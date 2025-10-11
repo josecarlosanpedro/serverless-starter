@@ -1,0 +1,10 @@
+node_modules
+coverage
+dist
+
+.env
+.serverless
+.DS_Store
+.webpack
+microservices/package-lock.json
+microservices/yarn.lock
